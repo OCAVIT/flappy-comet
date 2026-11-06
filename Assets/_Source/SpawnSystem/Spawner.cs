@@ -14,23 +14,12 @@ namespace SpawnSystem
         [SerializeField] Meteor meteorPrefab;
         [SerializeField] Star starPrefab;
 
-        [Tooltip("Звезда появляется не дальше этого от центра по вертикали")]
-        [SerializeField] float fieldHalfHeight = 3.55f;
-        [Tooltip("Запас за краем экрана: объект появляется и исчезает невидимо")]
-        [SerializeField] float offscreenMargin = 1.5f;
-        [Tooltip("На сколько метеорит быстрее мира, единиц в секунду")]
-        [SerializeField] Vector2 meteorExtraSpeed = new Vector2(2f, 4f);
-
-        [Header("Промежутки, единиц пути")]
-        [SerializeField] Vector2 meteorGapEasy = new Vector2(5.5f, 7.5f);
-        [SerializeField] Vector2 meteorGapHard = new Vector2(4.5f, 6f);
-        [SerializeField] Vector2 starGap = new Vector2(7f, 11f);
-
         readonly List<GameObject> spawned = new List<GameObject>();
         IObjectResolver resolver;
         GameController game;
         Comet comet;
         SparkField sparks;
+        SpawnSettings settings;
         bool running;
         float untilMeteor;
         float untilStar;
@@ -38,12 +27,13 @@ namespace SpawnSystem
         float HalfWidth => Camera.main.orthographicSize * Camera.main.aspect;
 
         [Inject]
-        public void Construct(IObjectResolver objectResolver, GameController controller, Comet cometInScene, SparkField sparkField)
+        public void Construct(IObjectResolver objectResolver, GameController controller, Comet cometInScene, SparkField sparkField, SpawnSettings spawnSettings)
         {
             resolver = objectResolver;
             game = controller;
             comet = cometInScene;
             sparks = sparkField;
+            settings = spawnSettings;
             game.RunStarted += Begin;
             game.RunEnded += Stop;
         }
@@ -61,8 +51,8 @@ namespace SpawnSystem
             spawned.Clear();
             sparks.Clear();
             running = true;
-            untilMeteor = 3f;
-            untilStar = 4f;
+            untilMeteor = settings.firstMeteorAfter;
+            untilStar = settings.firstStarAfter;
         }
 
         void Stop()
@@ -78,24 +68,24 @@ namespace SpawnSystem
             untilMeteor -= moved;
             untilStar -= moved;
 
-            float x = HalfWidth + offscreenMargin;
+            float x = HalfWidth + settings.offscreenMargin;
             if (untilMeteor <= 0f)
             {
                 SpawnMeteor(x, comet.transform.position.y);
-                Vector2 gap = Vector2.Lerp(meteorGapEasy, meteorGapHard, game.Difficulty);
+                Vector2 gap = Vector2.Lerp(settings.meteorGapEasy, settings.meteorGapHard, game.Difficulty);
                 untilMeteor += Random.Range(gap.x, gap.y);
             }
             if (untilStar <= 0f)
             {
-                SpawnStar(x, Random.Range(-fieldHalfHeight, fieldHalfHeight));
-                untilStar += Random.Range(starGap.x, starGap.y);
+                SpawnStar(x, Random.Range(-settings.fieldHalfHeight, settings.fieldHalfHeight));
+                untilStar += Random.Range(settings.starGap.x, settings.starGap.y);
             }
         }
 
         public Meteor SpawnMeteor(float x, float y)
         {
             Meteor meteor = resolver.Instantiate(meteorPrefab, new Vector3(x, y), Quaternion.identity);
-            meteor.Launch(game.WorldSpeed + Random.Range(meteorExtraSpeed.x, meteorExtraSpeed.y), -HalfWidth - offscreenMargin);
+            meteor.Launch(game.WorldSpeed + Random.Range(settings.meteorExtraSpeed.x, settings.meteorExtraSpeed.y), -HalfWidth - settings.offscreenMargin);
             spawned.RemoveAll(item => item == null);
             spawned.Add(meteor.gameObject);
             return meteor;
@@ -104,7 +94,7 @@ namespace SpawnSystem
         public Star SpawnStar(float x, float y)
         {
             Star star = resolver.Instantiate(starPrefab, new Vector3(x, y), Quaternion.identity);
-            star.GetComponent<Scroller>().RemoveAt(-HalfWidth - offscreenMargin);
+            star.GetComponent<Scroller>().RemoveAt(-HalfWidth - settings.offscreenMargin);
             spawned.RemoveAll(item => item == null);
             spawned.Add(star.gameObject);
             return star;

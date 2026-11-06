@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using CometSystem;
+using VContainer;
 using GameSystem;
 using NUnit.Framework;
 using SpawnSystem;
@@ -17,6 +18,7 @@ namespace FlappyCometTests
         GameController game;
         Comet comet;
         Spawner spawner;
+        FlightSettings flight;
         bool held;
 
         [UnitySetUp]
@@ -27,6 +29,7 @@ namespace FlappyCometTests
             game = Object.FindAnyObjectByType<GameController>();
             comet = Object.FindAnyObjectByType<Comet>();
             spawner = Object.FindAnyObjectByType<Spawner>();
+            flight = Object.FindAnyObjectByType<GameLifetimeScope>().Container.Resolve<FlightSettings>();
             held = false;
             game.HeldSource = () => held;
             yield return null;
@@ -250,7 +253,7 @@ namespace FlappyCometTests
             for (float t = Step; t <= RehearsalHorizon; t += Step)
             {
                 bool holding = t < switchAt ? first : !first;
-                velocity = Mathf.MoveTowards(velocity, holding ? comet.ClimbSpeed : -comet.FallSpeed, comet.Acceleration * Step);
+                velocity = Mathf.MoveTowards(velocity, holding ? flight.climbSpeed : -flight.fallSpeed, flight.acceleration * Step);
                 y += velocity * Step;
                 if (Mathf.Abs(y) > 3.5f) return -1000f + t;
                 if (float.IsNaN(atArrival) && t >= arrival) atArrival = y;

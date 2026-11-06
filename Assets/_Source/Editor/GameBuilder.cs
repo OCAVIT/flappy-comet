@@ -22,6 +22,7 @@ namespace BuildSystem
         const string SpritesFolder = "Assets/_Presentation/Sprites";
         const string MaterialsFolder = "Assets/_Presentation/Materials";
         const string PrefabsFolder = "Assets/_Presentation/Prefabs";
+        const string SettingsPath = "Assets/_Presentation/Settings/GameSettings.asset";
         const string ScenePath = "Assets/_Presentation/Scenes/Game.unity";
         const string WebGLOutput = "Builds/WebGL";
 
@@ -75,6 +76,7 @@ namespace BuildSystem
 
             // Сцена хранит только ссылки корня композиции: кому что нужно, решает контейнер.
             var scope = new GameObject("Game Lifetime Scope").AddComponent<GameLifetimeScope>();
+            Set(scope, "settings", LoadOrCreateSettings());
             Set(scope, "game", game);
             Set(scope, "comet", comet);
             Set(scope, "spawner", spawner);
@@ -123,6 +125,17 @@ namespace BuildSystem
             PlayerSettings.WebGL.decompressionFallback = true;
             PlayerSettings.WebGL.nameFilesAsHashes = true;
             PlayerSettings.WebGL.dataCaching = true;
+        }
+
+        // Настройки баланса переживают пересборку сцены: существующий ассет не перезаписывается.
+        static GameSettings LoadOrCreateSettings()
+        {
+            var settings = AssetDatabase.LoadAssetAtPath<GameSettings>(SettingsPath);
+            if (settings != null) return settings;
+            Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath));
+            settings = ScriptableObject.CreateInstance<GameSettings>();
+            AssetDatabase.CreateAsset(settings, SettingsPath);
+            return settings;
         }
 
         // ---------- Объекты сцены ----------

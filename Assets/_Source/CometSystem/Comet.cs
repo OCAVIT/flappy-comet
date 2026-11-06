@@ -1,6 +1,7 @@
 using System;
 using SpawnSystem;
 using UnityEngine;
+using VContainer;
 
 namespace CometSystem
 {
@@ -8,13 +9,7 @@ namespace CometSystem
     // Шлейф — частицы в мировых координатах, которые уносит влево со скоростью мира, поэтому он повторяет путь кометы.
     public class Comet : MonoBehaviour
     {
-        [SerializeField] float climbSpeed = 5.5f;
-        [SerializeField] float fallSpeed = 5.5f;
-        [SerializeField] float acceleration = 14f;
-
         [SerializeField] ParticleSystem trail;
-        [Tooltip("Длина шлейфа в единицах мира: от кометы до левого края экрана и чуть дальше")]
-        [SerializeField] float trailLength = 3.6f;
 
         public event Action StarCollected;
         public event Action Crashed;
@@ -22,12 +17,16 @@ namespace CometSystem
         public bool Holding { get; set; }
         public float WorldSpeed { get; set; }
         public float Velocity { get; private set; }
-        public float ClimbSpeed => climbSpeed;
-        public float FallSpeed => fallSpeed;
-        public float Acceleration => acceleration;
 
+        FlightSettings settings;
         Vector3 startPosition;
         bool flying;
+
+        [Inject]
+        public void Construct(FlightSettings flightSettings)
+        {
+            settings = flightSettings;
+        }
 
         void Awake()
         {
@@ -47,8 +46,8 @@ namespace CometSystem
         {
             if (!flying) return;
 
-            float target = Holding ? climbSpeed : -fallSpeed;
-            Velocity = Mathf.MoveTowards(Velocity, target, acceleration * Time.deltaTime);
+            float target = Holding ? settings.climbSpeed : -settings.fallSpeed;
+            Velocity = Mathf.MoveTowards(Velocity, target, settings.acceleration * Time.deltaTime);
             transform.position += Vector3.up * (Velocity * Time.deltaTime);
 
             if (WorldSpeed > 0f)
@@ -56,7 +55,7 @@ namespace CometSystem
                 var velocity = trail.velocityOverLifetime;
                 velocity.x = -WorldSpeed;
                 var main = trail.main;
-                main.startLifetime = trailLength / WorldSpeed;
+                main.startLifetime = settings.trailLength / WorldSpeed;
             }
         }
 

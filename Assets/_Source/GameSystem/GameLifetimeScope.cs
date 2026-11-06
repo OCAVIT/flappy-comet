@@ -10,6 +10,7 @@ namespace GameSystem
     // Корень композиции: единственное место, где решается, кто от кого получает зависимости.
     public class GameLifetimeScope : LifetimeScope
     {
+        [SerializeField] GameSettings settings;
         [SerializeField] GameController game;
         [SerializeField] Comet comet;
         [SerializeField] Spawner spawner;
@@ -18,6 +19,10 @@ namespace GameSystem
 
         protected override void Configure(IContainerBuilder builder)
         {
+            builder.RegisterInstance(settings.world);
+            builder.RegisterInstance(settings.flight);
+            builder.RegisterInstance(settings.spawn);
+
             builder.RegisterComponent(game);
             builder.RegisterComponent(comet);
             builder.RegisterComponent(spawner);
