@@ -54,7 +54,7 @@ namespace BuildSystem
             Meteor meteorPrefab = MakeMeteor(square, trailMaterial);
             Star starPrefab = MakeStar(star);
 
-            var cameraObject = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener)) { tag = "MainCamera" };
+            var cameraObject = new GameObject("Main Camera", typeof(Camera)) { tag = "MainCamera" };
             cameraObject.transform.position = new Vector3(0f, 0f, -10f);
             var view = cameraObject.GetComponent<Camera>();
             view.orthographic = true;
