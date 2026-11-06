@@ -15,7 +15,7 @@ namespace GameSystem
         [SerializeField] Camera gameCamera;
         [SerializeField] Comet comet;
         [SerializeField] SparkField sparks;
-        [SerializeField] GameHud hud;
+        [SerializeField] GameHudView hud;
         [SerializeField] Meteor meteorPrefab;
         [SerializeField] Star starPrefab;
 
@@ -38,10 +38,11 @@ namespace GameSystem
 
             builder.RegisterComponent(comet).As<IComet>();
             builder.RegisterComponent(sparks).As<ISparks>();
-            builder.RegisterComponent(hud);
+            builder.RegisterComponent(hud).As<IGameHudView>();
 
             builder.RegisterEntryPoint<GameFlow>();
             builder.RegisterEntryPoint<ObstacleSpawner>();
+            builder.RegisterEntryPoint<GameHudPresenter>();
         }
     }
 }

@@ -68,7 +68,7 @@ namespace BuildSystem
             Comet comet = MakeComet(circle, trailMaterial);
             SparkField sparks = MakeSparks(sparkMaterial);
 
-            GameHud hud = MakeHud();
+            GameHudView hud = MakeHud();
 
             // Сцена хранит только ссылки корня композиции: кому что нужно, решает контейнер.
             var scope = new GameObject("Game Lifetime Scope").AddComponent<GameLifetimeScope>();
@@ -324,7 +324,7 @@ namespace BuildSystem
             return prefab;
         }
 
-        static GameHud MakeHud()
+        static GameHudView MakeHud()
         {
             var canvasObject = new GameObject("HUD", typeof(Canvas), typeof(CanvasScaler));
             canvasObject.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
@@ -341,7 +341,7 @@ namespace BuildSystem
                 new Vector2(0f, -25f), 15, FontStyle.Normal, new Color(0.62f, 0.68f, 0.6f), TextAnchor.MiddleLeft);
             hint.text = "Hold the left mouse button to fly up";
 
-            var hud = canvasObject.AddComponent<GameHud>();
+            var hud = canvasObject.AddComponent<GameHudView>();
             Set(hud, "score", score);
             Set(hud, "message", message);
             Set(hud, "controlsHint", hint);
