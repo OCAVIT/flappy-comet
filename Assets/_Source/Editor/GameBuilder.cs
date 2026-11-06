@@ -68,16 +68,18 @@ namespace BuildSystem
             SparkField sparks = MakeSparks(sparkMaterial);
 
             var spawner = new GameObject("Spawner").AddComponent<Spawner>();
-            var game = new GameObject("Game").AddComponent<GameController>();
-            Set(game, "comet", comet);
-            Set(game, "spawner", spawner);
-            Set(spawner, "game", game);
-            Set(spawner, "comet", comet.transform);
             Set(spawner, "meteorPrefab", meteorPrefab);
             Set(spawner, "starPrefab", starPrefab);
-            Set(spawner, "sparks", sparks);
+            var game = new GameObject("Game").AddComponent<GameController>();
+            GameHud hud = MakeHud();
 
-            MakeHud(game);
+            // Сцена хранит только ссылки корня композиции: кому что нужно, решает контейнер.
+            var scope = new GameObject("Game Lifetime Scope").AddComponent<GameLifetimeScope>();
+            Set(scope, "game", game);
+            Set(scope, "comet", comet);
+            Set(scope, "spawner", spawner);
+            Set(scope, "sparks", sparks);
+            Set(scope, "hud", hud);
 
             Directory.CreateDirectory(Path.GetDirectoryName(ScenePath));
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -307,7 +309,7 @@ namespace BuildSystem
             return prefab;
         }
 
-        static void MakeHud(GameController game)
+        static GameHud MakeHud()
         {
             var canvasObject = new GameObject("HUD", typeof(Canvas), typeof(CanvasScaler));
             canvasObject.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
@@ -325,10 +327,10 @@ namespace BuildSystem
             hint.text = "Hold the left mouse button to fly up";
 
             var hud = canvasObject.AddComponent<GameHud>();
-            Set(hud, "game", game);
             Set(hud, "score", score);
             Set(hud, "message", message);
             Set(hud, "controlsHint", hint);
+            return hud;
         }
 
         static Text MakeText(Transform parent, string name, Vector2 anchor, Vector2 pivot, Vector2 position, int size,

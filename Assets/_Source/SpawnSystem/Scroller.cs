@@ -1,5 +1,6 @@
 using GameSystem;
 using UnityEngine;
+using VContainer;
 
 namespace SpawnSystem
 {
@@ -9,9 +10,14 @@ namespace SpawnSystem
         GameController game;
         float leftEdge;
 
-        public void Init(GameController controller, float destroyAtX)
+        [Inject]
+        public void Construct(GameController controller)
         {
             game = controller;
+        }
+
+        public void RemoveAt(float destroyAtX)
+        {
             leftEdge = destroyAtX;
         }
 

@@ -1,7 +1,7 @@
 using System;
 using CometSystem;
-using SpawnSystem;
 using UnityEngine;
+using VContainer;
 
 namespace GameSystem
 {
@@ -16,9 +16,6 @@ namespace GameSystem
     // Ввод один на всю игру: зажатая ЛКМ или пробел. Новое нажатие запускает игру, удержание ведёт комету вверх.
     public class GameController : MonoBehaviour
     {
-        [SerializeField] Comet comet;
-        [SerializeField] Spawner spawner;
-
         [Header("Скорость мира, единиц в секунду")]
         [SerializeField] float startSpeed = 5f;
         [SerializeField] float maxSpeed = 9f;
@@ -28,6 +25,8 @@ namespace GameSystem
         [SerializeField] float restartDelay = 0.35f;
 
         public event Action Changed;
+        public event Action RunStarted;
+        public event Action RunEnded;
 
         public GameState State { get; private set; } = GameState.Ready;
         public int Score { get; private set; }
@@ -37,9 +36,16 @@ namespace GameSystem
         // Источник ввода. Тесты подставляют сюда своего игрока.
         public Func<bool> HeldSource { get; set; } = () => Input.GetMouseButton(0) || Input.GetKey(KeyCode.Space);
 
+        Comet comet;
         float speed;
         float restartAllowedAt;
         bool wasHeld;
+
+        [Inject]
+        public void Construct(Comet cometInScene)
+        {
+            comet = cometInScene;
+        }
 
         void Awake()
         {
@@ -91,7 +97,7 @@ namespace GameSystem
             speed = startSpeed;
             State = GameState.Playing;
             comet.Launch();
-            spawner.Begin();
+            RunStarted?.Invoke();
             Changed?.Invoke();
         }
 
@@ -106,7 +112,7 @@ namespace GameSystem
             if (State != GameState.Playing) return;
             State = GameState.GameOver;
             restartAllowedAt = Time.unscaledTime + restartDelay;
-            spawner.Stop();
+            RunEnded?.Invoke();
             // Весь мир замирает в момент столкновения: и препятствия, и шлейф, и искры.
             Time.timeScale = 0f;
             Changed?.Invoke();

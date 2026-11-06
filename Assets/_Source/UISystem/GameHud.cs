@@ -1,6 +1,7 @@
 using GameSystem;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 namespace UISystem
 {
@@ -10,10 +11,17 @@ namespace UISystem
         const string StartText = "Press SPACEBAR to start";
         const string RestartText = "Game over. Press SPACEBAR to restart";
 
-        [SerializeField] GameController game;
         [SerializeField] Text score;
         [SerializeField] Text message;
         [SerializeField] Text controlsHint;
+
+        GameController game;
+
+        [Inject]
+        public void Construct(GameController controller)
+        {
+            game = controller;
+        }
 
         void OnEnable()
         {

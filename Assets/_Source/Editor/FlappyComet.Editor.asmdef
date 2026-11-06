@@ -2,7 +2,8 @@
     "name": "FlappyComet.Editor",
     "references": [
         "FlappyComet",
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "VContainer"
     ],
     "includePlatforms": [
         "Editor"

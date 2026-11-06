@@ -1,7 +1,8 @@
 {
     "name": "FlappyComet",
     "references": [
-        "UnityEngine.UI"
+        "UnityEngine.UI",
+        "VContainer"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -1,4 +1,5 @@
 using UnityEngine;
+using VContainer;
 
 namespace SpawnSystem
 {
@@ -11,9 +12,14 @@ namespace SpawnSystem
         SparkField sparks;
         float untilSpark;
 
-        public void Init(SparkField field)
+        [Inject]
+        public void Construct(SparkField field)
         {
             sparks = field;
+        }
+
+        void Start()
+        {
             untilSpark = Random.Range(0f, sparkInterval);
         }
 
