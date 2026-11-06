@@ -8,6 +8,8 @@ using SpawnSystem;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using VContainer.Unity;
+using WorldSystem;
 using Object = UnityEngine.Object;
 
 namespace FlappyCometTests
@@ -15,7 +17,15 @@ namespace FlappyCometTests
     // Правила игры на настоящей сцене: удержание и отпускание, звёзды, метеориты, полосы, перезапуск и автопилот.
     public class GameFlowTests
     {
-        GameController game;
+        sealed class FakeFlightInput : IFlightInput
+        {
+            public Func<bool> Source;
+            public bool Held => Source();
+        }
+
+        FakeFlightInput input;
+        IGameSession session;
+        IWorldSpeed world;
         Comet comet;
         Spawner spawner;
         FlightSettings flight;
@@ -25,13 +35,19 @@ namespace FlappyCometTests
         public IEnumerator SetUp()
         {
             Time.timeScale = 1f;
-            yield return SceneManager.LoadSceneAsync("Game");
-            game = Object.FindAnyObjectByType<GameController>();
+            held = false;
+            input = new FakeFlightInput { Source = () => held };
+
+            // Сцена и правила настоящие, подменяется только ввод: контейнер отдаёт последнюю регистрацию.
+            using (LifetimeScope.Enqueue(builder => builder.RegisterInstance<IFlightInput>(input)))
+                yield return SceneManager.LoadSceneAsync("Game");
+
+            IObjectResolver container = Object.FindAnyObjectByType<GameLifetimeScope>().Container;
+            session = container.Resolve<IGameSession>();
+            world = container.Resolve<IWorldSpeed>();
+            flight = container.Resolve<FlightSettings>();
             comet = Object.FindAnyObjectByType<Comet>();
             spawner = Object.FindAnyObjectByType<Spawner>();
-            flight = Object.FindAnyObjectByType<GameLifetimeScope>().Container.Resolve<FlightSettings>();
-            held = false;
-            game.HeldSource = () => held;
             yield return null;
         }
 
@@ -60,7 +76,7 @@ namespace FlappyCometTests
         {
             yield return new WaitForSeconds(0.3f);
 
-            Assert.That(game.State, Is.EqualTo(GameState.Ready));
+            Assert.That(session.State, Is.EqualTo(GameState.Ready));
             Assert.That(comet.transform.position.y, Is.EqualTo(0f));
             Assert.That(Object.FindObjectsByType<Meteor>(FindObjectsSortMode.None), Is.Empty);
         }
@@ -69,7 +85,7 @@ namespace FlappyCometTests
         public IEnumerator Holding_FliesUp_AndReleasing_FliesDown()
         {
             yield return Tap();
-            Assert.That(game.State, Is.EqualTo(GameState.Playing));
+            Assert.That(session.State, Is.EqualTo(GameState.Playing));
 
             float before = comet.transform.position.y;
             yield return new WaitForSeconds(0.35f);
@@ -89,11 +105,11 @@ namespace FlappyCometTests
             Vector3 position = comet.transform.position;
             Star star = spawner.SpawnStar(position.x + 1.5f, position.y + 0.4f);
 
-            yield return Until(() => game.Score == 1, 3f);
+            yield return Until(() => session.Score == 1, 3f);
             yield return null;
 
             Assert.That(star == null, Is.True, "Collected star must be removed");
-            Assert.That(game.State, Is.EqualTo(GameState.Playing));
+            Assert.That(session.State, Is.EqualTo(GameState.Playing));
         }
 
         [UnityTest]
@@ -103,10 +119,10 @@ namespace FlappyCometTests
             Vector3 position = comet.transform.position;
             spawner.SpawnMeteor(position.x + 1.5f, position.y + 0.4f);
 
-            yield return Until(() => game.State == GameState.GameOver, 3f);
+            yield return Until(() => session.State == GameState.GameOver, 3f);
 
             Assert.That(Time.timeScale, Is.EqualTo(0f));
-            Assert.That(game.WorldSpeed, Is.EqualTo(0f));
+            Assert.That(world.Current, Is.EqualTo(0f));
         }
 
         [UnityTest]
@@ -120,7 +136,7 @@ namespace FlappyCometTests
             Vector3 start = meteor.transform.position;
             Assert.That(start.y, Is.EqualTo(comet.transform.position.y).Within(0.3f), "Meteor must appear at the comet's height");
             Assert.That(start.x, Is.GreaterThan(Camera.main.orthographicSize * Camera.main.aspect - 1f), "Meteor must appear at the right edge");
-            Assert.That(meteor.Speed, Is.GreaterThan(game.WorldSpeed));
+            Assert.That(meteor.Speed, Is.GreaterThan(world.Current));
             ParticleSystem trail = meteor.GetComponentInChildren<ParticleSystem>();
             Assert.That(trail.isPlaying, Is.True);
 
@@ -136,7 +152,7 @@ namespace FlappyCometTests
         {
             yield return Tap();
             held = false;
-            yield return Until(() => game.State == GameState.GameOver, 5f);
+            yield return Until(() => session.State == GameState.GameOver, 5f);
             Assert.That(comet.transform.position.y, Is.LessThan(-3f));
         }
 
@@ -144,7 +160,7 @@ namespace FlappyCometTests
         public IEnumerator TopBand_EndsTheGame_WhenHeld()
         {
             yield return Tap();
-            yield return Until(() => game.State == GameState.GameOver, 5f);
+            yield return Until(() => session.State == GameState.GameOver, 5f);
             Assert.That(comet.transform.position.y, Is.GreaterThan(3f));
         }
 
@@ -154,20 +170,20 @@ namespace FlappyCometTests
             yield return Tap();
             Vector3 position = comet.transform.position;
             spawner.SpawnStar(position.x + 0.5f, position.y);
-            yield return Until(() => game.Score == 1, 2f);
+            yield return Until(() => session.Score == 1, 2f);
             spawner.SpawnMeteor(position.x + 1.5f, comet.transform.position.y);
-            yield return Until(() => game.State == GameState.GameOver, 3f);
+            yield return Until(() => session.State == GameState.GameOver, 3f);
 
             // Кнопка всё ещё зажата с момента столкновения: само по себе это не перезапуск.
             yield return new WaitForSecondsRealtime(0.5f);
-            Assert.That(game.State, Is.EqualTo(GameState.GameOver));
+            Assert.That(session.State, Is.EqualTo(GameState.GameOver));
 
             held = false;
             yield return null;
             yield return Tap();
 
-            Assert.That(game.State, Is.EqualTo(GameState.Playing));
-            Assert.That(game.Score, Is.EqualTo(0));
+            Assert.That(session.State, Is.EqualTo(GameState.Playing));
+            Assert.That(session.Score, Is.EqualTo(0));
             Assert.That(Time.timeScale, Is.EqualTo(1f));
             Assert.That(Mathf.Abs(comet.transform.position.y), Is.LessThan(0.2f));
             yield return null;
@@ -185,17 +201,17 @@ namespace FlappyCometTests
             int score = 0;
             for (int attempt = 0; attempt < Attempts && !reached; attempt++)
             {
-                game.HeldSource = () => held;
+                input.Source = () => held;
                 held = false;
                 yield return new WaitForSecondsRealtime(0.5f);
                 yield return Tap();
-                game.HeldSource = Autopilot;
+                input.Source = Autopilot;
 
                 Time.timeScale = 3f;
-                while (game.State == GameState.Playing && game.Difficulty < 1f) yield return null;
-                reached = game.State == GameState.Playing;
-                score = game.Score;
-                Debug.Log($"[Autopilot] attempt {attempt + 1}: reached max speed {reached}, score {score}, difficulty {game.Difficulty:0.00}");
+                while (session.State == GameState.Playing && world.Difficulty < 1f) yield return null;
+                reached = session.State == GameState.Playing;
+                score = session.Score;
+                Debug.Log($"[Autopilot] attempt {attempt + 1}: reached max speed {reached}, score {score}, difficulty {world.Difficulty:0.00}");
             }
             Time.timeScale = 1f;
 
@@ -220,7 +236,7 @@ namespace FlappyCometTests
                 {
                     nearest = ahead;
                     target = star.transform.position.y;
-                    arrival = Mathf.Max(ahead, 0f) / Mathf.Max(game.WorldSpeed, 1f);
+                    arrival = Mathf.Max(ahead, 0f) / Mathf.Max(world.Current, 1f);
                 }
             }
 

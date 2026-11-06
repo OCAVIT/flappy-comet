@@ -15,12 +15,12 @@ namespace UISystem
         [SerializeField] Text message;
         [SerializeField] Text controlsHint;
 
-        GameController game;
+        IGameSession game;
 
         [Inject]
-        public void Construct(GameController controller)
+        public void Construct(IGameSession session)
         {
-            game = controller;
+            game = session;
         }
 
         void OnEnable()

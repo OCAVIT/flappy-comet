@@ -71,13 +71,11 @@ namespace BuildSystem
             var spawner = new GameObject("Spawner").AddComponent<Spawner>();
             Set(spawner, "meteorPrefab", meteorPrefab);
             Set(spawner, "starPrefab", starPrefab);
-            var game = new GameObject("Game").AddComponent<GameController>();
             GameHud hud = MakeHud();
 
             // Сцена хранит только ссылки корня композиции: кому что нужно, решает контейнер.
             var scope = new GameObject("Game Lifetime Scope").AddComponent<GameLifetimeScope>();
             Set(scope, "settings", LoadOrCreateSettings());
-            Set(scope, "game", game);
             Set(scope, "comet", comet);
             Set(scope, "spawner", spawner);
             Set(scope, "sparks", sparks);
@@ -131,7 +129,12 @@ namespace BuildSystem
         static GameSettings LoadOrCreateSettings()
         {
             var settings = AssetDatabase.LoadAssetAtPath<GameSettings>(SettingsPath);
-            if (settings != null) return settings;
+            if (settings != null)
+            {
+                // Файл ассета переписывается по текущей структуре настроек, значения остаются.
+                EditorUtility.SetDirty(settings);
+                return settings;
+            }
             Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath));
             settings = ScriptableObject.CreateInstance<GameSettings>();
             AssetDatabase.CreateAsset(settings, SettingsPath);

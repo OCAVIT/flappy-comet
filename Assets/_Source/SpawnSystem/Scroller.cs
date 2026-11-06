@@ -1,19 +1,19 @@
-using GameSystem;
 using UnityEngine;
 using VContainer;
+using WorldSystem;
 
 namespace SpawnSystem
 {
     // Несёт объект влево со скоростью мира и удаляет его за левым краем экрана.
     public class Scroller : MonoBehaviour
     {
-        GameController game;
+        IWorldSpeed world;
         float leftEdge;
 
         [Inject]
-        public void Construct(GameController controller)
+        public void Construct(IWorldSpeed worldSpeed)
         {
-            game = controller;
+            world = worldSpeed;
         }
 
         public void RemoveAt(float destroyAtX)
@@ -23,7 +23,7 @@ namespace SpawnSystem
 
         void Update()
         {
-            transform.position += Vector3.left * (game.WorldSpeed * Time.deltaTime);
+            transform.position += Vector3.left * (world.Current * Time.deltaTime);
             if (transform.position.x < leftEdge) Destroy(gameObject);
         }
     }

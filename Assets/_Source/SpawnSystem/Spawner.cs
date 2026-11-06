@@ -4,6 +4,7 @@ using CometSystem;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
+using WorldSystem;
 
 namespace SpawnSystem
 {
@@ -16,8 +17,9 @@ namespace SpawnSystem
 
         readonly List<GameObject> spawned = new List<GameObject>();
         IObjectResolver resolver;
-        GameController game;
-        Comet comet;
+        IGameSession session;
+        IWorldSpeed world;
+        IComet comet;
         SparkField sparks;
         SpawnSettings settings;
         bool running;
@@ -27,21 +29,22 @@ namespace SpawnSystem
         float HalfWidth => Camera.main.orthographicSize * Camera.main.aspect;
 
         [Inject]
-        public void Construct(IObjectResolver objectResolver, GameController controller, Comet cometInScene, SparkField sparkField, SpawnSettings spawnSettings)
+        public void Construct(IObjectResolver objectResolver, IGameSession gameSession, IWorldSpeed worldSpeed, IComet cometInScene, SparkField sparkField, SpawnSettings spawnSettings)
         {
             resolver = objectResolver;
-            game = controller;
+            session = gameSession;
+            world = worldSpeed;
             comet = cometInScene;
             sparks = sparkField;
             settings = spawnSettings;
-            game.RunStarted += Begin;
-            game.RunEnded += Stop;
+            session.RunStarted += Begin;
+            session.RunEnded += Stop;
         }
 
         void OnDestroy()
         {
-            game.RunStarted -= Begin;
-            game.RunEnded -= Stop;
+            session.RunStarted -= Begin;
+            session.RunEnded -= Stop;
         }
 
         void Begin()
@@ -64,15 +67,15 @@ namespace SpawnSystem
         {
             if (!running) return;
 
-            float moved = game.WorldSpeed * Time.deltaTime;
+            float moved = world.Current * Time.deltaTime;
             untilMeteor -= moved;
             untilStar -= moved;
 
             float x = HalfWidth + settings.offscreenMargin;
             if (untilMeteor <= 0f)
             {
-                SpawnMeteor(x, comet.transform.position.y);
-                Vector2 gap = Vector2.Lerp(settings.meteorGapEasy, settings.meteorGapHard, game.Difficulty);
+                SpawnMeteor(x, comet.Height);
+                Vector2 gap = Vector2.Lerp(settings.meteorGapEasy, settings.meteorGapHard, world.Difficulty);
                 untilMeteor += Random.Range(gap.x, gap.y);
             }
             if (untilStar <= 0f)
@@ -85,7 +88,7 @@ namespace SpawnSystem
         public Meteor SpawnMeteor(float x, float y)
         {
             Meteor meteor = resolver.Instantiate(meteorPrefab, new Vector3(x, y), Quaternion.identity);
-            meteor.Launch(game.WorldSpeed + Random.Range(settings.meteorExtraSpeed.x, settings.meteorExtraSpeed.y), -HalfWidth - settings.offscreenMargin);
+            meteor.Launch(world.Current + Random.Range(settings.meteorExtraSpeed.x, settings.meteorExtraSpeed.y), -HalfWidth - settings.offscreenMargin);
             spawned.RemoveAll(item => item == null);
             spawned.Add(meteor.gameObject);
             return meteor;

@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a5e948e4ab04bc459d1c07b87f0076b, type: 3}
   m_Name: GameSettings
   m_EditorClassIdentifier: FlappyComet::GameSystem.GameSettings
+  flow:
+    restartDelay: 0.35
   world:
     startSpeed: 5
     maxSpeed: 9
     speedGrowth: 0.06
-    restartDelay: 0.35
   flight:
     climbSpeed: 5.5
     fallSpeed: 5.5
