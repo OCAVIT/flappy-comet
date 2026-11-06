@@ -68,18 +68,17 @@ namespace BuildSystem
             Comet comet = MakeComet(circle, trailMaterial);
             SparkField sparks = MakeSparks(sparkMaterial);
 
-            var spawner = new GameObject("Spawner").AddComponent<Spawner>();
-            Set(spawner, "meteorPrefab", meteorPrefab);
-            Set(spawner, "starPrefab", starPrefab);
             GameHud hud = MakeHud();
 
             // Сцена хранит только ссылки корня композиции: кому что нужно, решает контейнер.
             var scope = new GameObject("Game Lifetime Scope").AddComponent<GameLifetimeScope>();
             Set(scope, "settings", LoadOrCreateSettings());
+            Set(scope, "gameCamera", view);
             Set(scope, "comet", comet);
-            Set(scope, "spawner", spawner);
             Set(scope, "sparks", sparks);
             Set(scope, "hud", hud);
+            Set(scope, "meteorPrefab", meteorPrefab);
+            Set(scope, "starPrefab", starPrefab);
 
             Directory.CreateDirectory(Path.GetDirectoryName(ScenePath));
             EditorSceneManager.SaveScene(scene, ScenePath);

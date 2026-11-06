@@ -3,7 +3,7 @@ using UnityEngine;
 namespace SpawnSystem
 {
     // Одна система частиц на все оранжевые искры: её не уничтожают вместе со звездой, поэтому искры доживают свой век.
-    public class SparkField : MonoBehaviour
+    public class SparkField : MonoBehaviour, ISparks
     {
         [SerializeField] ParticleSystem field;
 

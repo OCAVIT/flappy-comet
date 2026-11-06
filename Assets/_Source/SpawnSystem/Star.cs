@@ -9,11 +9,11 @@ namespace SpawnSystem
         [SerializeField] float sparkInterval = 0.9f;
         [SerializeField] float sparkSpread = 0.35f;
 
-        SparkField sparks;
+        ISparks sparks;
         float untilSpark;
 
         [Inject]
-        public void Construct(SparkField field)
+        public void Construct(ISparks field)
         {
             sparks = field;
         }

@@ -27,7 +27,7 @@ namespace FlappyCometTests
         IGameSession session;
         IWorldSpeed world;
         Comet comet;
-        Spawner spawner;
+        IObstacleFactory factory;
         FlightSettings flight;
         bool held;
 
@@ -46,8 +46,8 @@ namespace FlappyCometTests
             session = container.Resolve<IGameSession>();
             world = container.Resolve<IWorldSpeed>();
             flight = container.Resolve<FlightSettings>();
+            factory = container.Resolve<IObstacleFactory>();
             comet = Object.FindAnyObjectByType<Comet>();
-            spawner = Object.FindAnyObjectByType<Spawner>();
             yield return null;
         }
 
@@ -103,7 +103,7 @@ namespace FlappyCometTests
         {
             yield return Tap();
             Vector3 position = comet.transform.position;
-            Star star = spawner.SpawnStar(position.x + 1.5f, position.y + 0.4f);
+            Star star = factory.CreateStar(new Vector2(position.x + 1.5f, position.y + 0.4f));
 
             yield return Until(() => session.Score == 1, 3f);
             yield return null;
@@ -117,7 +117,7 @@ namespace FlappyCometTests
         {
             yield return Tap();
             Vector3 position = comet.transform.position;
-            spawner.SpawnMeteor(position.x + 1.5f, position.y + 0.4f);
+            factory.CreateMeteor(new Vector2(position.x + 1.5f, position.y + 0.4f), world.Current + 3f);
 
             yield return Until(() => session.State == GameState.GameOver, 3f);
 
@@ -169,9 +169,9 @@ namespace FlappyCometTests
         {
             yield return Tap();
             Vector3 position = comet.transform.position;
-            spawner.SpawnStar(position.x + 0.5f, position.y);
+            factory.CreateStar(new Vector2(position.x + 0.5f, position.y));
             yield return Until(() => session.Score == 1, 2f);
-            spawner.SpawnMeteor(position.x + 1.5f, comet.transform.position.y);
+            factory.CreateMeteor(new Vector2(position.x + 1.5f, comet.transform.position.y), world.Current + 3f);
             yield return Until(() => session.State == GameState.GameOver, 3f);
 
             // Кнопка всё ещё зажата с момента столкновения: само по себе это не перезапуск.

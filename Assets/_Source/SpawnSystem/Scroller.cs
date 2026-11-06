@@ -8,23 +8,19 @@ namespace SpawnSystem
     public class Scroller : MonoBehaviour
     {
         IWorldSpeed world;
-        float leftEdge;
+        IPlayField field;
 
         [Inject]
-        public void Construct(IWorldSpeed worldSpeed)
+        public void Construct(IWorldSpeed worldSpeed, IPlayField playField)
         {
             world = worldSpeed;
-        }
-
-        public void RemoveAt(float destroyAtX)
-        {
-            leftEdge = destroyAtX;
+            field = playField;
         }
 
         void Update()
         {
             transform.position += Vector3.left * (world.Current * Time.deltaTime);
-            if (transform.position.x < leftEdge) Destroy(gameObject);
+            if (transform.position.x < field.ExitX) Destroy(gameObject);
         }
     }
 }

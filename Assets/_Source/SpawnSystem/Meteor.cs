@@ -1,4 +1,5 @@
 using UnityEngine;
+using VContainer;
 
 namespace SpawnSystem
 {
@@ -14,14 +15,18 @@ namespace SpawnSystem
 
         public float Speed { get; private set; }
 
+        IPlayField field;
         float spin;
-        float removeAtX;
 
-        public void Launch(float speed, float leftEdge)
+        [Inject]
+        public void Construct(IPlayField playField)
+        {
+            field = playField;
+        }
+
+        public void Launch(float speed)
         {
             Speed = speed;
-            // Метеорит удаляется вместе со следом, поэтому сначала за край должен уйти весь след.
-            removeAtX = leftEdge - trailLength;
             transform.localScale = Vector3.one * Random.Range(sizeRange.x, sizeRange.y);
             spin = Random.Range(spinRange.x, spinRange.y) * (Random.value < 0.5f ? -1f : 1f);
             var main = trail.main;
@@ -32,7 +37,8 @@ namespace SpawnSystem
         {
             transform.position += Vector3.left * (Speed * Time.deltaTime);
             transform.Rotate(0f, 0f, spin * Time.deltaTime);
-            if (transform.position.x < removeAtX) Destroy(gameObject);
+            // Метеорит удаляется вместе со следом, поэтому сначала за край должен уйти весь след.
+            if (transform.position.x < field.ExitX - trailLength) Destroy(gameObject);
         }
     }
 }

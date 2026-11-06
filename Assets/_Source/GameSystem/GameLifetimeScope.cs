@@ -12,10 +12,12 @@ namespace GameSystem
     public class GameLifetimeScope : LifetimeScope
     {
         [SerializeField] GameSettings settings;
+        [SerializeField] Camera gameCamera;
         [SerializeField] Comet comet;
-        [SerializeField] Spawner spawner;
         [SerializeField] SparkField sparks;
         [SerializeField] GameHud hud;
+        [SerializeField] Meteor meteorPrefab;
+        [SerializeField] Star starPrefab;
 
         protected override void Configure(IContainerBuilder builder)
         {
@@ -29,12 +31,17 @@ namespace GameSystem
             builder.Register<GameSession>(Lifetime.Singleton).AsSelf().As<IGameSession>();
             builder.Register<WorldSpeed>(Lifetime.Singleton).AsSelf().As<IWorldSpeed>();
 
+            builder.Register<IPlayField, CameraPlayField>(Lifetime.Singleton).WithParameter(gameCamera);
+            builder.Register<IObstacleFactory, ObstacleFactory>(Lifetime.Singleton)
+                .WithParameter(meteorPrefab)
+                .WithParameter(starPrefab);
+
             builder.RegisterComponent(comet).As<IComet>();
-            builder.RegisterComponent(spawner);
-            builder.RegisterComponent(sparks);
+            builder.RegisterComponent(sparks).As<ISparks>();
             builder.RegisterComponent(hud);
 
             builder.RegisterEntryPoint<GameFlow>();
+            builder.RegisterEntryPoint<ObstacleSpawner>();
         }
     }
 }
