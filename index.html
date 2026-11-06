@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+<meta name="theme-color" content="#000000">
+<title>Flappy Comet</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Ccircle cx='16' cy='16' r='10' fill='%2341b12b'/%3E%3C/svg%3E">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  /* Экран игры 16:10, вписан в окно браузера целиком, без полос прокрутки. */
+  #screen { position: relative; width: min(100vw, 160vh); aspect-ratio: 16 / 10; background: #000; }
+  #unity-canvas {
+    display: block; width: 100%; height: 100%; outline: none;
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  }
+  #loader {
+    position: absolute; left: 50%; top: 50%; width: min(40%, 320px); height: 8px;
+    transform: translate(-50%, -50%); background: #244811;
+  }
+  #loader-fill { width: 0; height: 100%; background: #41b12b; }
+  #error {
+    display: none; position: absolute; inset: 0; align-items: center; justify-content: center; padding: 24px;
+    color: #fff; font: 16px/1.5 Arial, sans-serif; text-align: center;
+  }
+</style>
+</head>
+<body>
+<div id="screen">
+  <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+  <div id="loader"><div id="loader-fill"></div></div>
+  <div id="error"></div>
+</div>
+<script src="Build/1db80fe1ba0d2d343d3dc2fa094c0afd.loader.js"></script>
+<script>
+  const canvas = document.getElementById("unity-canvas");
+  const loader = document.getElementById("loader");
+  const fill = document.getElementById("loader-fill");
+
+  createUnityInstance(canvas, {
+    arguments: [],
+    dataUrl: "Build/132f3f1a9757b78fe05f7d9a13691f7d.data.unityweb",
+    frameworkUrl: "Build/fdf59b9db447834be43acf4f03d36178.framework.js.unityweb",
+    codeUrl: "Build/234c17c87d000c9382b39ceb9b2e3537.wasm.unityweb",
+    streamingAssetsUrl: "StreamingAssets",
+    companyName: "KTSHKI",
+    productName: "Flappy Comet",
+    productVersion: "1.0",
+  }, (progress) => {
+    fill.style.width = (progress * 100) + "%";
+  }).then(() => {
+    loader.style.display = "none";
+    canvas.focus();
+  }).catch((message) => {
+    loader.style.display = "none";
+    const error = document.getElementById("error");
+    error.textContent = "The game could not start: " + message;
+    error.style.display = "flex";
+  });
+</script>
+</body>
+</html>
